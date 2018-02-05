@@ -162,8 +162,8 @@ class FrameFooter(ctypes.Structure):
 class Frame(ctypes.Structure):
     _fields_ = [
         ("header", FrameHeader),
-        #("subframes", Subframe * FLAC__MAX_CHANNELS),
-        #("footer", FrameFooter),
+        ("subframes", Subframe * FLAC__MAX_CHANNELS),
+        ("footer", FrameFooter),
     ]
 
 
@@ -204,17 +204,134 @@ class StreamMetadata_StreamInfo(ctypes.Structure):
     ]
 
 
+class StreamMetadata_Padding(ctypes.Structure):
+    _fields_ = [
+        ("dummy", ctypes.c_int),
+    ]
+
+
+class StreamMetadata_Application(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_byte * 4),
+        ("data", ctypes.POINTER(ctypes.c_byte)),
+    ]
+
+
+class StreamMetadata_SeekPoint(ctypes.Structure):
+    _fields_ = [
+        ("sample_number", ctypes.c_uint64),
+        ("stream_offset", ctypes.c_uint64),
+        ("frame_samples", ctypes.c_uint),
+    ]
+
+
+class StreamMetadata_SeekTable(ctypes.Structure):
+    _fields_ = [
+        ("num_points", ctypes.c_uint),
+        ("points", ctypes.POINTER(StreamMetadata_SeekPoint)),
+    ]
+
+
+class StreamMetadata_VorbisComment_Entry(ctypes.Structure):
+    _fields_ = [
+        ("length", ctypes.c_uint32),
+        ("entry", ctypes.POINTER(ctypes.c_byte)),
+    ]
+
+
+class StreamMetadata_VorbisComment(ctypes.Structure):
+    _fields_ = [
+        ("vendor_string", StreamMetadata_VorbisComment_Entry),
+        ("num_comments", ctypes.c_uint32),
+        ("comments", ctypes.POINTER(StreamMetadata_VorbisComment_Entry)),
+    ]
+
+
+class StreamMetadata_CueSheet_Index(ctypes.Structure):
+    _fields_ = [
+        ("offset", ctypes.c_uint64),
+        ("number", ctypes.c_byte),
+    ]
+
+
+class StreamMetadata_CueSheet_Track(ctypes.Structure):
+    _fields_ = [
+        ("offset", ctypes.c_uint64),
+        ("number", ctypes.c_byte),
+        ("isrc", ctypes.c_char * 13),
+        ("type", ctypes.c_uint),
+        ("pre_emphasis", ctypes.c_uint),
+        ("num_indices", ctypes.c_byte),
+        ("indices", ctypes.POINTER(StreamMetadata_CueSheet_Index)),
+    ]
+
+
+class StreamMetadata_CueSheet(ctypes.Structure):
+    _fields_ = [
+        ("media_catalog_number", ctypes.c_char * 129),
+        ("lead_in", ctypes.c_uint64),
+        ("is_cd", ctypes.c_int),
+        ("num_tracks", ctypes.c_uint),
+        ("tracks", ctypes.POINTER(StreamMetadata_CueSheet_Track)),
+    ]
+
+
+class StreamMetadata_Picture_Type:
+    FLAC__STREAM_METADATA_PICTURE_TYPE_OTHER                    = 0   # Other
+    FLAC__STREAM_METADATA_PICTURE_TYPE_FILE_ICON_STANDARD       = 1   # 32x32 pixels 'file icon' (PNG only)
+    FLAC__STREAM_METADATA_PICTURE_TYPE_FILE_ICON                = 2   # Other file icon
+    FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER              = 3   # Cover (front)
+    FLAC__STREAM_METADATA_PICTURE_TYPE_BACK_COVER               = 4   # Cover (back)
+    FLAC__STREAM_METADATA_PICTURE_TYPE_LEAFLET_PAGE             = 5   # Leaflet page
+    FLAC__STREAM_METADATA_PICTURE_TYPE_MEDIA                    = 6   # Media (e.g. label side of CD)
+    FLAC__STREAM_METADATA_PICTURE_TYPE_LEAD_ARTIST              = 7   # Lead artist/lead performer/soloist
+    FLAC__STREAM_METADATA_PICTURE_TYPE_ARTIST                   = 8   # Artist/performer
+    FLAC__STREAM_METADATA_PICTURE_TYPE_CONDUCTOR                = 9   # Conductor
+    FLAC__STREAM_METADATA_PICTURE_TYPE_BAND                     = 10  # Band/Orchestra
+    FLAC__STREAM_METADATA_PICTURE_TYPE_COMPOSER                 = 11  # Composer
+    FLAC__STREAM_METADATA_PICTURE_TYPE_LYRICIST                 = 12  # Lyricist/text writer
+    FLAC__STREAM_METADATA_PICTURE_TYPE_RECORDING_LOCATION       = 13  # Recording Location
+    FLAC__STREAM_METADATA_PICTURE_TYPE_DURING_RECORDING         = 14  # During recording
+    FLAC__STREAM_METADATA_PICTURE_TYPE_DURING_PERFORMANCE       = 15  # During performance
+    FLAC__STREAM_METADATA_PICTURE_TYPE_VIDEO_SCREEN_CAPTURE     = 16  # Movie/video screen capture
+    FLAC__STREAM_METADATA_PICTURE_TYPE_FISH                     = 17  # A bright coloured fish
+    FLAC__STREAM_METADATA_PICTURE_TYPE_ILLUSTRATION             = 18  # Illustration
+    FLAC__STREAM_METADATA_PICTURE_TYPE_BAND_LOGOTYPE            = 19  # Band/artist logotype
+    FLAC__STREAM_METADATA_PICTURE_TYPE_PUBLISHER_LOGOTYPE       = 20  # Publisher/Studio logotype
+
+
+class StreamMetadata_Picture(ctypes.Structure):
+    _fields_ = [
+        ("type", ctypes.c_int),
+        ("mime_type", ctypes.POINTER(ctypes.c_char)),
+        ("description", ctypes.POINTER(ctypes.c_byte)),
+        ("width", ctypes.c_uint32),
+        ("height", ctypes.c_uint32),
+        ("depth", ctypes.c_uint32),
+        ("colors", ctypes.c_uint32),
+        ("data_length", ctypes.c_uint32),
+        ("data", ctypes.POINTER(ctypes.c_byte)),
+    ]
+
+
+class StreamMetadata_Unknown(ctypes.Structure):
+    _fields_ = [
+        ("data", ctypes.POINTER(ctypes.c_byte)),
+    ]
+
+
 class MetadataData(ctypes.Union):
     _fields_ = [
         ("stream_info", StreamMetadata_StreamInfo),
-#        ("padding", StreamMetadata_Padding),
-#        ("application", StreamMetadata_Application),
-#        ("seek_table", StreamMetadata_SeekTable),
-#        ("vorbis_comment", StreamMetadata_VorbisComment),
-#        ("cue_sheet", StreamMetadata_CueSheet),
-#        ("picture", StreamMetadata_Picture),
-#        ("unknown", StreamMetadata_Unknown),
+        ("padding", StreamMetadata_Padding),
+        ("application", StreamMetadata_Application),
+        ("seek_table", StreamMetadata_SeekTable),
+        ("vorbis_comment", StreamMetadata_VorbisComment),
+        ("cue_sheet", StreamMetadata_CueSheet),
+        ("picture", StreamMetadata_Picture),
+        ("unknown", StreamMetadata_Unknown),
     ]
+
 
 class StreamMetadata(ctypes.Structure):
     _fields_ = [
@@ -257,15 +374,14 @@ class FlacDecoder(object):
                         ctypes.POINTER(None),
                         ctypes.POINTER(None),
                         write_callback_type,
-                        ctypes.POINTER(None),
+                        metadata_callback_type,
                         error_callback_type,
                         ctypes.py_object])
 
         self.process_func = c_func('FLAC__stream_decoder_process_until_end_of_stream',
                                    ctypes.c_int, [ctypes.POINTER(StreamDecoder)])
         self.process_metadata_func = c_func('FLAC__stream_decoder_process_until_end_of_metadata',
-                                            ctypes.c_int, [ctypes.POINTER(StreamDecoder)],
-                                            truthcheck)
+                                            ctypes.c_int, [ctypes.POINTER(StreamDecoder)])
         self.reset_func = c_func('FLAC__stream_decoder_reset',
                                  None, [ctypes.POINTER(StreamDecoder)])
         self.finish_func = c_func('FLAC__stream_decoder_finish', ctypes.c_int,
@@ -282,13 +398,11 @@ class FlacDecoder(object):
               None, # FlacDecoder.length_callback,
               None, # FlacDecoder.eof_callback,
               write_callback_type(FlacDecoder.write_callback),
-              None, # metadata_callback_type(FlacDecoder.metadata_callback),
+              metadata_callback_type(FlacDecoder.metadata_callback),
               error_callback_type(FlacDecoder.error_callback),
               ctypes.py_object(self))
 
     def get_metadata(self):
-        return None
-        """ This doesn't work """
         self.__fill_buffer()
         if not self.process_metadata_func(self.__decoder):
             raise Exception("process_metadata_func returned False, len(buf) is %d" % len(self.__buffer))
@@ -377,15 +491,14 @@ class FlacDecoder(object):
 
     @staticmethod
     def error_callback(decoder, status, self):
-        pass
+        print("Got error_callback with status: %d" % status)
 
 
 if __name__ == '__main__':
+    from pley.output.oss import Device
     f = FlacDecoder()
     with open("/mnt/media/Audio/owned/16_48/The Who/Who's Next (Deluxe Edition)/01-Baba O'Riley.flac", "rb") as fp:
         f.queue.put(fp.read())
-    from pley.output.oss import Device
-    import pudb; pu.db
     d = Device()
-    #print("Metadata: %r" % f.get_metadata())
+    print("Metadata: %r" % f.get_metadata())
     f.play(d.write)
