@@ -1,2 +1,3 @@
 *.c
 *.so
+cython_debug
