@@ -3,7 +3,7 @@ from libc.string cimport memmove
 from threading import Lock
 
 
-cdef FLAC__StreamDecoderReadStatus read_cb(const FLAC__StreamDecoder *decoder, uint8_t buffer[], size_t *bytes, void *client_data) except -1:
+cdef FLAC__StreamDecoderReadStatus read_cb(const FLAC__StreamDecoder *decoder, uint8_t buffer[], size_t *bytes, void *client_data):
     cdef FLAC__StreamDecoderReadStatus ret = FLAC__StreamDecoderReadStatus.FLAC__STREAM_DECODER_READ_STATUS_CONTINUE
     py_decoder = <FlacDecoder>client_data
     mv = py_decoder.read(bytes[0])
