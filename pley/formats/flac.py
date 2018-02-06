@@ -1,6 +1,6 @@
 import ctypes
 import ctypes.util
-from queue import Queue, Empty
+from threading import Lock
 
 
 libflac = ctypes.cdll.LoadLibrary(ctypes.util.find_library('FLAC'))
@@ -362,7 +362,7 @@ error_callback_type = ctypes.CFUNCTYPE(None, ctypes.POINTER(StreamDecoder),
 
 class FlacDecoder(object):
     def __init__(self):
-        self.__queue = Queue()
+        self.__lock = Lock()
         self.__streaminfo = None
         self.__decoder = c_func('FLAC__stream_decoder_new', ctypes.POINTER(StreamDecoder))()
         _init = c_func('FLAC__stream_decoder_init_stream',
@@ -403,7 +403,6 @@ class FlacDecoder(object):
               ctypes.py_object(self))
 
     def get_metadata(self):
-        self.__fill_buffer()
         if not self.process_metadata_func(self.__decoder):
             raise Exception("process_metadata_func returned False, len(buf) is %d" % len(self.__buffer))
         return self.__streaminfo
@@ -411,21 +410,12 @@ class FlacDecoder(object):
     def play(self, callback):
         self.__continue = True
         self.play_callback = callback
-        self.__fill_buffer()
         if not self.process_func(self.__decoder):
             raise Exception("StreamDecoder process returned False, len(buf) is %d" % len(self.__buffer))
 
-    def __fill_buffer(self):
-        block = False
-        if len(self.__buffer) == 0:
-            block = True
-        try:
-            data = self.__queue.get(block)
-        except Empty:
-            return
-        if data is None:
-            return
-        self.__buffer.extend(data)
+    def add_data(self, data):
+        with self.__lock:
+            self.__buffer.extend(data)
 
     def stop(self):
         self.__continue = False
@@ -439,14 +429,11 @@ class FlacDecoder(object):
     def keep_playing(self):
         return self.__continue
 
-    @property
-    def queue(self):
-        return self.__queue
-
     def read(self, length):
-        data = memoryview(self.__buffer)[:length]
-        self.__buffer = self.__buffer[length:]
-        return data
+        with self.__lock:
+            data = memoryview(self.__buffer)[:length]
+            self.__buffer = self.__buffer[length:]
+            return data
 
     def finish(self):
         self.finish_func(self.__decoder)
@@ -465,7 +452,6 @@ class FlacDecoder(object):
             ret = ReadStatusEnum.FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
         ctypes.memmove(_buf, tmp.tobytes(), length[0])
         tmp.release()
-        self.__fill_buffer()
         return ret
 
     @staticmethod
@@ -483,7 +469,7 @@ class FlacDecoder(object):
     @staticmethod
     def metadata_callback(decoder, metadata, self):
         if metadata[0].type == MetadataType.FLAC__METADATA_TYPE_STREAMINFO:
-            self.__streaminfo = {
+            self._FlacDecoder__streaminfo = {
                 'channels': metadata[0].data.stream_info.channels,
                 'sample_rate': metadata[0].data.stream_info.sample_rate,
                 'bits': metadata[0].data.stream_info.bits_per_sample,
@@ -497,8 +483,10 @@ class FlacDecoder(object):
 if __name__ == '__main__':
     from pley.output.oss import Device
     f = FlacDecoder()
-    with open("/mnt/media/Audio/owned/16_48/The Who/Who's Next (Deluxe Edition)/01-Baba O'Riley.flac", "rb") as fp:
-        f.queue.put(fp.read())
+    with open("/mnt/media/Audio/FLAC/Alice In Chains/Jar of Flies/01 - Rotten Apple.flac", "rb") as fp:
+        f.add_data(fp.read())
     d = Device()
-    print("Metadata: %r" % f.get_metadata())
+    meta = f.get_metadata()
+    print("Metadata: %r" % meta)
+    d.samplerate(meta['sample_rate'])
     f.play(d.write)

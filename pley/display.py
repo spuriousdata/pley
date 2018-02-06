@@ -45,7 +45,7 @@ class UI(object):
             if k in self.callbacks:
                 self.callbacks[k]()
             elif k == 'q':
-                self.player.stop()
+                self.player.end()
                 break
             else:
                 pass
@@ -96,7 +96,7 @@ class MainPanel(object):
         y, x = self.win.getyx()
         item = self.data[y-1]
         if item.get('type', None) == 'track':
-            self.parent.play(self.plex.down(item['key'])[0])
+            self.parent.play(item)
         else:
             self.clearhl()
             self.plex.down(item['key'])

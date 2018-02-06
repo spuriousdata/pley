@@ -9,9 +9,11 @@ name = "pypi"
 
 pyyaml = "*"
 requests = "*"
+cython = "*"
 
 
 [dev-packages]
+
 
 
 [requires]
