@@ -12,7 +12,7 @@ setup(
     packages=['pley'],
     install_requires=['PyYAML', 'requests'],
     ext_modules=cythonize([
-        Extension('pley.cformats.flac', ['pley/cformats/flac.pyx'],
+        Extension('pley.formats.flac', ['pley/formats/flac.pyx'],
             libraries=['FLAC'],
             )
         ], gdb_debug=True),

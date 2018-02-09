@@ -1,7 +1,6 @@
 import importlib
 from threading import Thread, Event
-#from pley.formats.flac import FlacDecoder
-from pley.cformats.flac import FlacDecoder
+from pley.formats.flac import FlacDecoder
 from pley import config
 
 
