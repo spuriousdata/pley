@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "35223ca5b21154e1de84f125ed8f6bb51a882265b3f130a2658dab20f1d41e7c"
+            "sha256": "a70664353cb62ac93d8ef62124e22451cd8c9b615fd95912563fdfb2acd5eb1c"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -119,5 +119,13 @@
             "version": "==1.22"
         }
     },
-    "develop": {}
+    "develop": {
+        "remote-pdb": {
+            "hashes": [
+                "sha256:665cc74e033fe7c65ff40a1d28e6b3b7def7f1fb9947500ac5b44badfb1b2562",
+                "sha256:61ae364de25d1dd2bd03643309b20db79c1b8e4da42068840e030f9e69655101"
+            ],
+            "version": "==1.2.0"
+        }
+    }
 }
