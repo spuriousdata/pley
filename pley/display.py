@@ -54,10 +54,8 @@ class UI(object):
 class MainPanel(object):
     def __init__(self, parent, height, y, plex):
         self.outerwin = curses.newwin(height, curses.COLS, y, 0)
-        self.outerwin.border()
-        self.outerwin.refresh()
         self.win = curses.newpad(500, curses.COLS-2)
-        self.lines = 0
+        self.scroll = 0
         self.y = y+1
         self.height = height - 1
         self.plex = plex
@@ -73,14 +71,21 @@ class MainPanel(object):
         y = 0
         self.data = self.plex.get()
         self.bottom = len(self.data)
-        for item in [x['title'] for x in self.data]:
+        for item in self.data:
             y += 1
             try:
-                self.win.addstr(y, 1, "{} >".format(item))
+                s = ""
+                if item.get('type', None) == 'track':
+                    s = "[{:10.3f}s]   {}".format(item['duration'] / 1000., item['title'])
+                else:
+                    s = "{} >".format(item['title'])
+                self.win.addstr(y, 1, s)
             except Exception as e:
                 raise Exception("y is %d, self.height is %d" % (y, self.height)) from e
         self.win.move(0, 0)
-        self.win.refresh(0, 0, self.y, 1, self.height, curses.COLS-2)
+        self.outerwin.border()
+        self.outerwin.refresh()
+        self.win.refresh(self.scroll, 0, self.y, 1, self.height, curses.COLS-2)
 
     def register_callbacks(self):
         self.parent.register_callbacks(('j', curses.KEY_DOWN), self.movehl, 1)
@@ -122,7 +127,7 @@ class MainPanel(object):
         except Exception as e:
             debug("Exception: {!r}".format(e))
         self.hl(new_y)
-        self.win.refresh(0, 0, self.y, 1, self.height, curses.COLS-2)
+        self.win.refresh(self.scroll, 0, self.y, 1, self.height, curses.COLS-2)
 
     def nohl(self, row):
         self.hl(row, False)

@@ -39,7 +39,7 @@ class Plex(object):
                                   headers=self.headers, stream=True)
 
     def up(self):
-        if self.__history:
+        if self.__history and len(self.__history) > 1:
             self.__history = self.__history[:-1]
         return self.get()
 

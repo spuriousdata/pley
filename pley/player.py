@@ -48,6 +48,9 @@ class Player(object):
                 self.stopevent.clear()
                 self.thread.start()
 
+    def callback(self, data):
+        self.soundcard.write(data)
+
     def run(self, response, decoder):
         for data in response.iter_content(8192):
             if self.stopevent.is_set():
@@ -59,7 +62,7 @@ class Player(object):
             self.soundcard.samplerate(meta['sample_rate'])
             self.soundcard.channels(meta['channels'])
 
-        decoder.play(self.soundcard.write)
+        decoder.play(self.callback)
 
 
 if __name__ == '__main__':
