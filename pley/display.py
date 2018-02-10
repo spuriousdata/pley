@@ -158,12 +158,14 @@ class MainPanel(object):
         self.pad.move(y, 0)
         self.hl(y)
         self.refresh()
+        """
         debug({
             'top': self.top,
             'bottom': self.bottom,
             'y': y,
             'lastrow': self.lastrow,
         }, True)
+        """
 
     def nohl(self, row):
         self.hl(row, False)
