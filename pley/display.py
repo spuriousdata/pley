@@ -92,7 +92,6 @@ class MainPanel(object):
         self.data = self.plex.get()
         y = 0
         for i in range(self.top, self.datalen):
-            y += 1
             try:
                 item = self.data[i]
                 s = ""
@@ -101,15 +100,18 @@ class MainPanel(object):
                 else:
                     s = "{} >".format(item['title'])
                 self.pad.addstr(y, 1, s)
+                y += 1
             except Exception as e:
-                raise Exception("y is %d, i is %d, self.height is %d" % (y, i, self.height)) from e
-        self.refresh(True)
+                raise Exception("y is %d, i is %d, self.height is %d, data[i] is %r" % (y, i, self.height, item)) from e
+        self.refresh(True, True)
 
-    def refresh(self, all=False):
+    def refresh(self, all=False, hl=False):
         if all:
             self.win.border()
             self.win.refresh()
             self.pad.move(0, 0)
+        if hl:
+            self.hl(self.pad.getyx()[0])
         self.pad.refresh(self.top, 0, self.y, 1, self.height, curses.COLS-2)
 
     def register_callbacks(self):
@@ -124,7 +126,7 @@ class MainPanel(object):
 
     def down(self):
         y, x = self.pad.getyx()
-        item = self.data[y-1]
+        item = self.data[y]
         if item.get('type', None) == 'track':
             self.parent.play(item)
         else:
@@ -138,41 +140,28 @@ class MainPanel(object):
 
     def movehl(self, direction):
         y, x = self.pad.getyx()
-        self.selectrow(y, y+direction)
+        if y == self.lastrow and direction > 0:
+            return
+        if y == 0 and direction < 0:
+            return
+        self.clearhl()
+        self.selectrow(y+direction)
 
-    def scroll(self, new_y):
-        if new_y >= self.bottom and new_y < self.lastrow:
+    def scroll(self, y):
+        if y >= self.bottom and y < self.lastrow:
             self.top += 1
-        if new_y < self.top and new_y >= 0:
+        elif y < self.top and y >= 0:
             self.top -= 1
 
-    def selectrow(self, old_y, new_y):
-        if new_y < 1 or new_y > self.datalen:
-            debug({
-                'old_y': old_y,
-                'new_y': new_y,
-                'top': self.top,
-                'datalen': self.datalen,
-                'lastrow': self.lastrow,
-            }, True)
-            return
-
-        self.scroll(new_y)
-
-        if old_y != 0:
-            # reset current row
-            self.nohl(old_y)
-        try:
-            self.pad.move(new_y, 0)
-        except Exception as e:
-            debug("Exception: {!r}".format(e))
-        self.hl(new_y)
+    def selectrow(self, y):
+        self.scroll(y)
+        self.pad.move(y, 0)
+        self.hl(y)
         self.refresh()
         debug({
-            'old_y': old_y,
-            'new_y': new_y,
             'top': self.top,
-            'datalen': self.datalen,
+            'bottom': self.bottom,
+            'y': y,
             'lastrow': self.lastrow,
         }, True)
 
