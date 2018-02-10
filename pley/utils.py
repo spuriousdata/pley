@@ -10,6 +10,7 @@ def debug(msg, pretty=False):
     if pretty:
         debug.win.move(0, 0)
         debug.win.clear()
+        debug.y = 1
         debug.win.addstr(debug.y, 2, pprint.pformat(msg))
     else:
         debug.win.addstr(debug.y, 2, msg)

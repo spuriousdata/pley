@@ -72,6 +72,10 @@ class MainPanel(object):
 
     @property
     def lastrow(self):
+        return self.datalen - 1
+
+    @property
+    def datalen(self):
         return len(self.data)
 
     def push_state(self):
@@ -87,7 +91,7 @@ class MainPanel(object):
         self.pad.move(0, 0)
         self.data = self.plex.get()
         y = 0
-        for i in range(self.top, self.lastrow):
+        for i in range(self.top, self.datalen):
             y += 1
             try:
                 item = self.data[i]
@@ -137,13 +141,20 @@ class MainPanel(object):
         self.selectrow(y, y+direction)
 
     def scroll(self, new_y):
-        if new_y > self.bottom and new_y < self.lastrow:
+        if new_y >= self.bottom and new_y < self.lastrow:
             self.top += 1
-        if new_y < self.top and new_y > 0:
+        if new_y < self.top and new_y >= 0:
             self.top -= 1
 
     def selectrow(self, old_y, new_y):
-        if new_y < 1 or new_y > self.lastrow:
+        if new_y < 1 or new_y > self.datalen:
+            debug({
+                'old_y': old_y,
+                'new_y': new_y,
+                'top': self.top,
+                'datalen': self.datalen,
+                'lastrow': self.lastrow,
+            }, True)
             return
 
         self.scroll(new_y)
@@ -157,6 +168,13 @@ class MainPanel(object):
             debug("Exception: {!r}".format(e))
         self.hl(new_y)
         self.refresh()
+        debug({
+            'old_y': old_y,
+            'new_y': new_y,
+            'top': self.top,
+            'datalen': self.datalen,
+            'lastrow': self.lastrow,
+        }, True)
 
     def nohl(self, row):
         self.hl(row, False)
