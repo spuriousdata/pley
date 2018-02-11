@@ -22,7 +22,8 @@ cdef FLAC__StreamDecoderWriteStatus write_cb(const FLAC__StreamDecoder *decoder,
         d = bytearray()
         for b in range(0, frame[0].header.blocksize):
             for c in range(0, frame[0].header.channels):
-                d.extend(buffer[c][b].to_bytes(2, byteorder='little', signed=True))
+                # I don't know how to detect the byteorder of the samples
+                d.extend(buffer[c][b].to_bytes(py_decoder.bytes, byteorder='little', signed=True))
         py_decoder.play_callback(bytes(d))
         return FLAC__StreamDecoderWriteStatus.FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE
     else:
@@ -74,6 +75,15 @@ cdef class FlacDecoder(object):
 
     def finish(self):
         FLAC__stream_decoder_finish(self.__decoder)
+
+    @property
+    def bits(self):
+        return self.__streaminfo['bits']
+
+    @property
+    def bytes(self):
+        b = self.bits
+        return int(b / 8)
 
     @property
     def keep_playing(self):
