@@ -60,7 +60,7 @@ class MainPanel(object):
         self.pad = curses.newpad(self.pad_height, curses.COLS-2)
         self.parent = parent
         self.height = height - 1
-        self.y = y+1
+        self.y = y + 1
         self.top = 0
         self.plex = plex
         self.data = []
@@ -69,7 +69,7 @@ class MainPanel(object):
 
     @property
     def bottom(self):
-        return min(len(self.data), (self.top + self.height)) - 1
+        return min(len(self.data), (self.top + self.height) - 1)
 
     @property
     def lastrow(self):
@@ -154,34 +154,26 @@ class MainPanel(object):
         if y == 0 and direction < 0:
             return
         self.clearhl()
-        self.selectrow(y+direction)
+        self.scroll(y, direction)
+        self.selectrow(y + direction)
 
-    def scroll(self, y):
-        if y >= self.bottom and y < self.lastrow:
+    def scroll(self, y, direction):
+        if direction > 0 and y == (self.bottom - 1) and y < self.lastrow:
             self.top += 1
-        elif y < self.top and y >= 0:
+        if direction < 0 and y == self.top and y > 0:
             self.top -= 1
 
     def selectrow(self, y):
-        self.scroll(y)
         self.pad.move(y, 0)
         self.hl(y)
         self.refresh()
-        """
-        debug({
-            'top': self.top,
-            'bottom': self.bottom,
-            'y': y,
-            'lastrow': self.lastrow,
-        }, True)
-        """
 
     def nohl(self, row):
         self.hl(row, False)
 
     def hl(self, row, on=True):
         attr = curses.A_REVERSE if on else curses.A_NORMAL
-        self.pad.chgat(row, 1, curses.COLS-2, attr)
+        self.pad.chgat(row, 1, curses.COLS - 2, attr)
 
 
 class PlayerPanel(object):
