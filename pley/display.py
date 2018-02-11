@@ -56,9 +56,10 @@ PanelState = namedtuple('PanelState', ['top', 'selected_row'])
 class MainPanel(object):
     def __init__(self, parent, height, y, plex):
         self.win = curses.newwin(height, curses.COLS, y, 0)
-        self.pad = curses.newpad(500, curses.COLS-2)
+        self.pad_height = 100
+        self.pad = curses.newpad(self.pad_height, curses.COLS-2)
         self.parent = parent
-        self.height = height-1
+        self.height = height - 1
         self.y = y+1
         self.top = 0
         self.plex = plex
@@ -99,11 +100,19 @@ class MainPanel(object):
                     s = "[{:10.3f}s]   {}".format(item['duration'] / 1000., item['title'])
                 else:
                     s = "{} >".format(item['title'])
-                self.pad.addstr(y, 1, s)
+                try:
+                    self.pad.addstr(y, 1, s)
+                except:
+                    self.resize()
+                    self.pad.addstr(y, 1, s)
                 y += 1
             except Exception as e:
                 raise Exception("y is %d, i is %d, self.height is %d, data[i] is %r" % (y, i, self.height, item)) from e
         self.refresh(True, True)
+
+    def resize(self):
+        self.pad_height *= 2
+        self.pad.resize(self.pad_height, curses.COLS-2)
 
     def refresh(self, all=False, hl=False):
         if all:
