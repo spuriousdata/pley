@@ -1,5 +1,7 @@
 import importlib
+import audioop
 from threading import Thread, Event
+from functools import partial
 from pley.formats.flac import FlacDecoder
 from pley import config
 
@@ -10,6 +12,7 @@ class Player(object):
         self.plex = plex
         self.stopevent = Event()
         self.thread = None
+        self.meta = None
 
         amod = importlib.import_module('pley.output.' + config.get('sound.module'))
         Device = getattr(amod, 'Device')
@@ -48,8 +51,13 @@ class Player(object):
                 self.stopevent.clear()
                 self.thread.start()
 
-    def callback(self, data):
-        self.soundcard.write(data)
+    def callback(self, data, bits=0, samplerate=0, channels=0, newrate=0, newwidth=0):
+        newdata = data[:]
+        if samplerate != newrate:
+            (newdata, s) = audioop.ratecv(newdata, int(bits / 8), channels, samplerate, newrate, None)
+        if bits != newwidth:
+            newdata = audioop.lin2lin(newdata, int(bits / 8), int(newwidth / 8))
+        self.soundcard.write(newdata)
 
     def run(self, response, decoder):
         for data in response.iter_content(8192):
@@ -57,12 +65,17 @@ class Player(object):
                 return
             decoder.add_data(data)
 
-        meta = decoder.get_metadata()
-        if meta:
-            self.soundcard.samplerate(meta['sample_rate'])
-            self.soundcard.channels(meta['channels'])
+        self.meta = decoder.get_metadata()
 
-        decoder.play(self.callback)
+        self.soundcard.channels(self.meta.channels)
+        rate = self.soundcard.samplerate(self.meta.samplerate)
+        bits = self.soundcard.bits(self.meta.bits)
+
+        cb = partial(self.callback, bits=self.meta.bits,
+                samplerate=self.meta.samplerate, channels=self.meta.channels,
+                newrate=rate, newwidth=bits)
+
+        decoder.play(cb)
 
 
 if __name__ == '__main__':

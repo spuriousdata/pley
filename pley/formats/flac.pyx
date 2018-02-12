@@ -1,6 +1,7 @@
 from cflac cimport *
 from libc.string cimport memmove
 from threading import Lock
+from pley.helpers import Metadata
 
 
 cdef FLAC__StreamDecoderReadStatus read_cb(const FLAC__StreamDecoder *decoder, uint8_t buffer[], size_t *bytes, void *client_data):
@@ -33,11 +34,11 @@ cdef FLAC__StreamDecoderWriteStatus write_cb(const FLAC__StreamDecoder *decoder,
 cdef void metadata_cb(const FLAC__StreamDecoder *decoder, const FLAC__StreamMetadata *metadata, void *client_data):
     py_decoder = <FlacDecoder>client_data
     if metadata[0].type == FLAC__MetadataType.FLAC__METADATA_TYPE_STREAMINFO:
-        py_decoder.set_streaminfo({
-            'channels': metadata[0].data.stream_info.channels,
-            'sample_rate': metadata[0].data.stream_info.sample_rate,
-            'bits': metadata[0].data.stream_info.bits_per_sample,
-        })
+        py_decoder.set_streaminfo(Metadata(
+            metadata[0].data.stream_info.bits_per_sample,
+            metadata[0].data.stream_info.sample_rate,
+            metadata[0].data.stream_info.channels,
+        ))
 
 
 cdef void error_cb(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data):
@@ -78,7 +79,7 @@ cdef class FlacDecoder(object):
 
     @property
     def bits(self):
-        return self.__streaminfo['bits']
+        return self.__streaminfo.bits
 
     @property
     def bytes(self):
